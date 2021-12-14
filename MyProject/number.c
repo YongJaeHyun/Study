@@ -26,6 +26,4 @@ int main(void)
 	}
 	printf("Win\n\n\nAnswer = %d\n", num);
 	return 0;
-
-}
-				
+}				
