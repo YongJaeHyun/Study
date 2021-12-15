@@ -1,0 +1,5 @@
+﻿  Function.c
+C:\Users\User\source\repos\Project1\Function.c(8,12): warning C4244: '함수': 'time_t'에서 'unsigned int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+LINK : warning LNK4075: '/INCREMENTAL'이(가) '/PROFILE' 사양으로 인해 무시됩니다.
+Function.obj : warning LNK4075: '/EDITANDCONTINUE'이(가) '/OPT:REF' 사양으로 인해 무시됩니다.
+  Project1.vcxproj -> C:\Users\User\source\repos\Project1\x64\Debug\Project.exe
