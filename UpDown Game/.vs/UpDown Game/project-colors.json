@@ -1,0 +1,11 @@
+{
+  "Version": 1,
+  "ProjectMap": {
+    "c2f9ad32-3247-4e2f-81a8-c5d6504091b2": {
+      "ProjectGuid": "c2f9ad32-3247-4e2f-81a8-c5d6504091b2",
+      "DisplayName": "UpDown Game",
+      "ColorIndex": 0
+    }
+  },
+  "NextColorIndex": 1
+}
