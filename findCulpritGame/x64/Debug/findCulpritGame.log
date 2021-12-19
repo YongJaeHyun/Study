@@ -1,0 +1,4 @@
+﻿  findCulpritGame.c
+C:\Users\User\source\repos\Study\findCulpritGame\findCulpritGame.c(6,7): warning C4013: 'srand'이(가) 정의되지 않았습니다. extern은 int형을 반환하는 것으로 간주합니다.
+C:\Users\User\source\repos\Study\findCulpritGame\findCulpritGame.c(9,20): warning C4013: 'rand'이(가) 정의되지 않았습니다. extern은 int형을 반환하는 것으로 간주합니다.
+  findCulpritGame.vcxproj -> C:\Users\User\source\repos\Study\findCulpritGame\x64\Debug\findCulpritGame.exe
