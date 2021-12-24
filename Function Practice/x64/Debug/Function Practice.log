@@ -1,5 +1,0 @@
-﻿  Function Practice.c
-C:\Users\User\source\repos\Study\Function Practice\Function Practice.c(11,7): warning C4013: 'srand'이(가) 정의되지 않았습니다. extern은 int형을 반환하는 것으로 간주합니다.
-C:\Users\User\source\repos\Study\Function Practice\Function Practice.c(28,8): warning C4013: 'exit'이(가) 정의되지 않았습니다. extern은 int형을 반환하는 것으로 간주합니다.
-C:\Users\User\source\repos\Study\Function Practice\Function Practice.c(59,13): warning C4013: 'rand'이(가) 정의되지 않았습니다. extern은 int형을 반환하는 것으로 간주합니다.
-  Function Practice.vcxproj -> C:\Users\User\source\repos\Study\Function Practice\x64\Debug\Function Practice.exe
