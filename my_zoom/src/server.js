@@ -1,5 +1,5 @@
 import http from "http";
-import WebSocket from "ws";
+import SocketIO from "socket.io";
 import express from "express";
 
 const app = express();
@@ -12,34 +12,70 @@ app.get("/*", (req, res) => res.redirect("/"));
 
 const handleListen = () => console.log(`listening on http://localhost:3000`);
 
-const server = http.createServer(app);
+const httpServer = http.createServer(app);
+const wsServer = SocketIO(httpServer);
 
-const wss = new WebSocket.Server({ server });
+wsServer.on("connection", (socket) => {
+  socket["nickname"] = "Anonymous";
+  socket.onAny((e) => console.log(`Socket Event: ${e}`));
 
-const sockets = [];
-
-wss.on("connection", (backSocket) => {
-  console.log("Connected to the browser ✅");
-  backSocket["nickname"] = "Anonymous";
-  sockets.push(backSocket);
-
-  backSocket.on("close", () => {
-    console.log("Disconnected from the browser ❌");
+  socket.on("enter_room", (roomName, done) => {
+    socket.join(roomName);
+    done();
+    socket.to(roomName).emit("welcome", socket.nickname);
   });
-
-  backSocket.on("message", (msg) => {
-    const message = JSON.parse(msg);
-    switch (message.type) {
-      case "new_message":
-        sockets.forEach((aSocket) =>
-          aSocket.send(`${backSocket.nickname}: ${message.payload}`)
-        );
-        break;
-      case "nickname":
-        backSocket["nickname"] = message.payload;
-        break;
-    }
+  socket.on("disconnecting", () => {
+    socket.rooms.forEach((room) => {
+      socket.to(room).emit("bye", socket.nickname);
+    });
+  });
+  socket.on("new_message", (msg, room, done) => {
+    socket.to(room).emit("new_message", msg, socket.nickname);
+    done();
+  });
+  socket.on("nickname", (nickname, done) => {
+    socket["nickname"] = nickname;
+    done();
   });
 });
 
-server.listen(3000, handleListen);
+// const sockets = [];
+
+// wss.on("connection", (backSocket) => {
+//   sockets.push(backSocket);
+//   backSocket["nickname"] = "Anonymous";
+//   sockets.at(-1).send(`Your Nickname : ${backSocket.nickname}`);
+//   console.log("Connected to the browser ✅");
+
+//   sockets
+//     .slice(0, sockets.at(-1))
+//     .forEach((aSocket) =>
+//       aSocket.send(`New ${backSocket.nickname} is entered.`)
+//     );
+
+//   backSocket.on("close", () => {
+//     console.log("Disconnected from the browser ❌");
+//   });
+
+//   backSocket.on("message", (msg) => {
+//     const message = JSON.parse(msg);
+//     switch (message.type) {
+//       case "new_message":
+//         sockets.forEach((aSocket) =>
+//           aSocket.send(`${backSocket.nickname}: ${message.payload}`)
+//         );
+//         break;
+//       case "nickname":
+//         const originNickname = backSocket.nickname;
+//         backSocket["nickname"] = message.payload;
+//         sockets.forEach((aSocket) =>
+//           aSocket.send(
+//             `${originNickname} changed nickname to ${backSocket.nickname}`
+//           )
+//         );
+//         break;
+//     }
+//   });
+// });
+
+httpServer.listen(3000, handleListen);
