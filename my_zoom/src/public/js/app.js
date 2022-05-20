@@ -30,10 +30,18 @@ function handleNicknameSubmit(e) {
   const input = room.querySelector("#nickname input");
   const h3 = room.querySelector("#nickname h3");
   const value = input.value;
-  socket.emit("nickname", value, () => {
+  socket.emit("nickname", value, roomName, () => {
     h3.innerText = `Your nickname: ${value}`;
   });
   input.value = "";
+}
+
+function handleQuitSubmit() {
+  welcome.hidden = false;
+  room.hidden = true;
+  const ul = room.querySelector("ul");
+  ul.innerHTML = "";
+  socket.emit("quit_room", roomName);
 }
 
 function showRoom() {
@@ -43,8 +51,10 @@ function showRoom() {
   h3.innerText = `Room ${roomName}`;
   const messageForm = room.querySelector("#message");
   const nicknameForm = room.querySelector("#nickname");
+  const quitButton = room.querySelector("button");
   messageForm.addEventListener("submit", handleMessageSubmit);
   nicknameForm.addEventListener("submit", handleNicknameSubmit);
+  quitButton.addEventListener("click", handleQuitSubmit);
 }
 
 function handleRoomSubmit(e) {
@@ -55,16 +65,51 @@ function handleRoomSubmit(e) {
   input.value = "";
 }
 
-form.addEventListener("submit", handleRoomSubmit);
-
-socket.on("welcome", (nickname) => {
-  addMessage(`${nickname} Joined!`);
+socket.on("connect", () => {
+  socket.emit("init");
 });
 
-socket.on("bye", (nickname) => {
+socket.on("enter_room", (roomName, id, nickname, newCount) => {
+  const h3 = room.querySelector("h3");
+  const h3_nickname = room.querySelector("#nickname h3");
+
+  h3.innerText = `Room ${roomName} (Concurrent Users: ${newCount})`;
+  if (id === socket.id) {
+    h3_nickname.innerText = `Your nickname: ${nickname}`;
+    addMessage("You Joined!");
+  } else {
+    addMessage(`${nickname} Joined!`);
+  }
+});
+
+socket.on("bye", (nickname, newCount) => {
+  const h3 = room.querySelector("h3");
+  h3.innerText = `Room ${roomName} (Concurrent Users: ${newCount})`;
   addMessage(`${nickname} left ㅠㅠ`);
 });
 
 socket.on("new_message", (msg, nickname) => {
   addMessage(`${nickname}: ${msg}`);
 });
+
+socket.on("nickname_change", (prev_nickname, changed_nickname) => {
+  addMessage(
+    `nickname is changed! ✔ : (${prev_nickname} --> ${changed_nickname})`
+  );
+});
+
+socket.on("room_change", (roomName, rooms) => {
+  const roomList = welcome.querySelector("ul");
+  roomList.innerHTML = "";
+  if (rooms.length === 0) {
+    return;
+  }
+  rooms.forEach((room) => {
+    const li = document.createElement("li");
+    const count = rooms[room];
+    li.innerText = `Room ${roomName}  |  (Concurrent Users: ${count})`;
+    roomList.appendChild(li);
+  });
+});
+
+form.addEventListener("submit", handleRoomSubmit);

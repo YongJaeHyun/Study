@@ -1,5 +1,6 @@
 import http from "http";
-import SocketIO from "socket.io";
+import { Server } from "socket.io";
+import { instrument } from "@socket.io/admin-ui";
 import express from "express";
 
 const app = express();
@@ -13,69 +14,98 @@ app.get("/*", (req, res) => res.redirect("/"));
 const handleListen = () => console.log(`listening on http://localhost:3000`);
 
 const httpServer = http.createServer(app);
-const wsServer = SocketIO(httpServer);
+const wsServer = new Server(httpServer, {
+  cors: {
+    origin: ["https://admin.socket.io"],
+    credentials: true,
+  },
+});
+instrument(wsServer, {
+  auth: false,
+});
+
+function publicRooms() {
+  const {
+    sockets: {
+      adapter: { sids, rooms },
+    },
+  } = wsServer;
+  const publicRooms = [];
+  rooms.forEach((_, key) => {
+    if (sids.get(key) === undefined) {
+      publicRooms.push({ key: countRoom(key) });
+    }
+  });
+  return publicRooms;
+}
+
+function showRoom(roomName) {
+  wsServer.sockets.emit("room_change", roomName, publicRooms());
+}
+
+function countRoom(roomName) {
+  return wsServer.sockets.adapter.rooms.get(roomName)?.size;
+}
 
 wsServer.on("connection", (socket) => {
-  socket["nickname"] = "Anonymous";
-  socket.onAny((e) => console.log(`Socket Event: ${e}`));
+  socket["nickname"] = `Anonymous${Math.ceil(Math.random() * 9999)}`;
+  // socket.onAny((e) => {
+  //   console.log(`Socket Event: ${e}`);
+  // });
 
+  socket.on("init", () => {
+    publicRooms().forEach((roomName) => {
+      showRoom(roomName);
+    });
+  });
   socket.on("enter_room", (roomName, done) => {
     socket.join(roomName);
     done();
-    socket.to(roomName).emit("welcome", socket.nickname);
+    wsServer
+      .to(roomName)
+      .emit(
+        "enter_room",
+        roomName,
+        socket.id,
+        socket.nickname,
+        countRoom(roomName)
+      );
+    showRoom(roomName);
   });
-  socket.on("disconnecting", () => {
+  socket.on("quit_room", (roomName) => {
     socket.rooms.forEach((room) => {
-      socket.to(room).emit("bye", socket.nickname);
+      if (room !== socket.id) {
+        socket.to(room).emit("bye", socket.nickname, countRoom(room) - 1);
+      }
+    });
+    socket.leave(roomName);
+    showRoom(roomName);
+  });
+  socket.on("disconnecting", (e) => {
+    socket.rooms.forEach((room) => {
+      if (room !== socket.id) {
+        socket.to(room).emit("bye", socket.nickname, countRoom(room) - 1);
+      }
+    });
+    publicRooms().forEach((roomName) => {
+      if (socket.rooms.has(roomName)) {
+        socket.leave(roomName);
+        showRoom(roomName);
+      }
     });
   });
   socket.on("new_message", (msg, room, done) => {
     socket.to(room).emit("new_message", msg, socket.nickname);
     done();
   });
-  socket.on("nickname", (nickname, done) => {
+  socket.on("nickname", (nickname, roomName, done) => {
+    const prev_nickname = socket.nickname;
     socket["nickname"] = nickname;
+    wsServer
+      .to(roomName)
+      .emit("nickname_change", prev_nickname, socket.nickname);
     done();
   });
 });
-
-// const sockets = [];
-
-// wss.on("connection", (backSocket) => {
-//   sockets.push(backSocket);
-//   backSocket["nickname"] = "Anonymous";
-//   sockets.at(-1).send(`Your Nickname : ${backSocket.nickname}`);
-//   console.log("Connected to the browser ✅");
-
-//   sockets
-//     .slice(0, sockets.at(-1))
-//     .forEach((aSocket) =>
-//       aSocket.send(`New ${backSocket.nickname} is entered.`)
-//     );
-
-//   backSocket.on("close", () => {
-//     console.log("Disconnected from the browser ❌");
-//   });
-
-//   backSocket.on("message", (msg) => {
-//     const message = JSON.parse(msg);
-//     switch (message.type) {
-//       case "new_message":
-//         sockets.forEach((aSocket) =>
-//           aSocket.send(`${backSocket.nickname}: ${message.payload}`)
-//         );
-//         break;
-//       case "nickname":
-//         const originNickname = backSocket.nickname;
-//         backSocket["nickname"] = message.payload;
-//         sockets.forEach((aSocket) =>
-//           aSocket.send(
-//             `${originNickname} changed nickname to ${backSocket.nickname}`
-//           )
-//         );
-//         break;
-//     }
-//   });
-// });
 
 httpServer.listen(3000, handleListen);
