@@ -1,115 +1,224 @@
 const socket = io();
 
+const myFace = document.querySelector("#myFace");
+const muteBtn = document.querySelector("#mute");
+const cameraBtn = document.querySelector("#camera");
+const camerasSelect = document.querySelector("#cameras");
+const call = document.querySelector("#call");
+const chatBox = document.querySelector("#chatBox");
+const chatForm = chatBox.querySelector("form");
+const nicknameDiv = document.querySelector("#nicknameDiv");
+const nicknameForm = nicknameDiv.querySelector("form");
 const welcome = document.querySelector("#welcome");
-const form = welcome.querySelector("form");
-const room = document.querySelector("#room");
 
-room.hidden = true;
+call.hidden = true;
+welcome.hidden = true;
 
+let myStream;
+let muted = false;
+let cameraOff = false;
 let roomName;
+let myPeerConnection;
+let myDataChannel;
+let nickname;
 
-function addMessage(message) {
-  const ul = room.querySelector("ul");
-  const li = document.createElement("li");
-  li.innerText = message;
-  ul.appendChild(li);
+async function getCameras() {
+  try {
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const cameras = devices.filter((device) => device.kind === "videoinput");
+    const currentCamera = myStream.getVideoTracks()[0];
+    cameras.forEach((camera) => {
+      const option = document.createElement("option");
+      option.value = camera.deviceId;
+      option.innerText = camera.label;
+      if (currentCamera.label === camera.label) {
+        option.selected = true;
+      }
+      camerasSelect.appendChild(option);
+    });
+  } catch (e) {
+    console.log(e);
+  }
 }
 
-function handleMessageSubmit(e) {
+async function getMedia(deviceId) {
+  const initialConstrains = {
+    audio: true,
+    video: { facingMode: "user" },
+  };
+  const cameraConstraints = {
+    audio: true,
+    video: { deviceId: { exact: deviceId } },
+  };
+  try {
+    myStream = await navigator.mediaDevices.getUserMedia(
+      deviceId ? cameraConstraints : initialConstrains
+    );
+    myFace.srcObject = myStream;
+    if (!deviceId) {
+      await getCameras();
+    }
+  } catch (e) {
+    console.log(e);
+  }
+}
+
+function handleMuteClick() {
+  myStream
+    .getAudioTracks()
+    .forEach((track) => (track.enabled = !track.enabled));
+  if (!muted) {
+    muteBtn.innerText = "Unmute";
+    muted = true;
+  } else {
+    muteBtn.innerText = "mute";
+    muted = false;
+  }
+}
+function handleCameraClick() {
+  myStream
+    .getVideoTracks()
+    .forEach((track) => (track.enabled = !track.enabled));
+  if (cameraOff) {
+    cameraBtn.innerText = "Camera Off";
+    cameraOff = false;
+  } else {
+    cameraBtn.innerText = "Camera On";
+    cameraOff = true;
+  }
+}
+
+async function handleCameraChange() {
+  await getMedia(camerasSelect.value);
+  if (myPeerConnection) {
+    const videoTrack = myStream.getVideoTracks()[0];
+    const videoSender = myPeerConnection
+      .getSenders()
+      .find((sender) => sender.track.kind === "video");
+    videoSender.replaceTrack(videoTrack);
+  }
+}
+
+muteBtn.addEventListener("click", handleMuteClick);
+cameraBtn.addEventListener("click", handleCameraClick);
+camerasSelect.addEventListener("input", handleCameraChange);
+
+// Welcome Form (Join a room)
+
+const welcomeForm = welcome.querySelector("form");
+
+async function initCall() {
+  welcome.hidden = true;
+  call.hidden = false;
+  chatBox.hidden = true;
+  await getMedia();
+  makeConnection();
+}
+
+async function handleWelcomeSubmit(e) {
   e.preventDefault();
-  const input = room.querySelector("#message input");
-  const value = input.value;
-  socket.emit("new_message", value, roomName, () => {
-    addMessage(`You: ${value}`);
-  });
+  const input = welcomeForm.querySelector("input");
+  await initCall();
+  socket.emit("join_room", input.value);
+  roomName = input.value;
   input.value = "";
 }
 
 function handleNicknameSubmit(e) {
   e.preventDefault();
-  const input = room.querySelector("#nickname input");
-  const h3 = room.querySelector("#nickname h3");
-  const value = input.value;
-  socket.emit("nickname", value, roomName, () => {
-    h3.innerText = `Your nickname: ${value}`;
-  });
+  const input = nicknameForm.querySelector("input");
+  nickname = input.value;
   input.value = "";
-}
-
-function handleQuitSubmit() {
+  nicknameDiv.hidden = true;
   welcome.hidden = false;
-  room.hidden = true;
-  const ul = room.querySelector("ul");
-  ul.innerHTML = "";
-  socket.emit("quit_room", roomName);
 }
 
-function showRoom() {
-  welcome.hidden = true;
-  room.hidden = false;
-  const h3 = room.querySelector("h3");
-  h3.innerText = `Room ${roomName}`;
-  const messageForm = room.querySelector("#message");
-  const nicknameForm = room.querySelector("#nickname");
-  const quitButton = room.querySelector("button");
-  messageForm.addEventListener("submit", handleMessageSubmit);
-  nicknameForm.addEventListener("submit", handleNicknameSubmit);
-  quitButton.addEventListener("click", handleQuitSubmit);
-}
+welcomeForm.addEventListener("submit", handleWelcomeSubmit);
+nicknameForm.addEventListener("submit", handleNicknameSubmit);
 
-function handleRoomSubmit(e) {
+// Socket Code
+
+function addMessage(e) {
   e.preventDefault();
-  const input = form.querySelector("input");
-  socket.emit("enter_room", input.value, showRoom);
-  roomName = input.value;
+  const input = chatForm.querySelector("input");
+  const message = input.value;
+  const ul = chatForm.querySelector("ul");
+  const li = document.createElement("li");
+  li.innerText = `You: ${message}`;
+  ul.appendChild(li);
+  ul.scrollTop = ul.scrollHeight; // scroll down to bottom automatically
   input.value = "";
+  myDataChannel.send(`${myDataChannel.nickname} : ${message}`);
 }
 
-socket.on("connect", () => {
-  socket.emit("init");
-});
+function receiveMessage(message) {
+  const ul = chatForm.querySelector("ul");
+  const li = document.createElement("li");
+  li.innerText = message.data
+    ? `${message.data}`
+    : `${myDataChannel.nickname} : ${message}`;
+  ul.appendChild(li);
+  ul.scrollTop = ul.scrollHeight; // scroll down to bottom automatically
+}
 
-socket.on("enter_room", (roomName, id, nickname, newCount) => {
-  const h3 = room.querySelector("h3");
-  const h3_nickname = room.querySelector("#nickname h3");
-
-  h3.innerText = `Room ${roomName} (Concurrent Users: ${newCount})`;
-  if (id === socket.id) {
-    h3_nickname.innerText = `Your nickname: ${nickname}`;
-    addMessage("You Joined!");
-  } else {
-    addMessage(`${nickname} Joined!`);
-  }
-});
-
-socket.on("bye", (nickname, newCount) => {
-  const h3 = room.querySelector("h3");
-  h3.innerText = `Room ${roomName} (Concurrent Users: ${newCount})`;
-  addMessage(`${nickname} left ㅠㅠ`);
-});
-
-socket.on("new_message", (msg, nickname) => {
-  addMessage(`${nickname}: ${msg}`);
-});
-
-socket.on("nickname_change", (prev_nickname, changed_nickname) => {
-  addMessage(
-    `nickname is changed! ✔ : (${prev_nickname} --> ${changed_nickname})`
-  );
-});
-
-socket.on("room_change", (roomName, rooms) => {
-  const roomList = welcome.querySelector("ul");
-  roomList.innerHTML = "";
-  if (rooms.length === 0) {
-    return;
-  }
-  rooms.forEach((room) => {
-    const li = document.createElement("li");
-    const count = rooms[room];
-    li.innerText = `Room ${roomName}  |  (Concurrent Users: ${count})`;
-    roomList.appendChild(li);
+socket.on("welcome", async () => {
+  myDataChannel = myPeerConnection.createDataChannel("chat");
+  myDataChannel.nickname = nickname;
+  myDataChannel.addEventListener("open", () => {
+    chatBox.hidden = false;
+    myDataChannel.send("chatroom connected!");
+    myDataChannel.addEventListener("message", receiveMessage);
+    chatForm.addEventListener("submit", addMessage);
   });
+  const offer = await myPeerConnection.createOffer();
+  myPeerConnection.setLocalDescription(offer);
+  socket.emit("offer", offer, roomName);
 });
 
-form.addEventListener("submit", handleRoomSubmit);
+socket.on("offer", async (offer) => {
+  myPeerConnection.addEventListener("datachannel", (e) => {
+    myDataChannel = e.channel;
+    myDataChannel.nickname = nickname;
+    chatBox.hidden = false;
+    myDataChannel.send("chatroom connected!");
+    myDataChannel.addEventListener("message", receiveMessage);
+    chatForm.addEventListener("submit", addMessage);
+  });
+  myPeerConnection.setRemoteDescription(offer);
+  const answer = await myPeerConnection.createAnswer();
+  myPeerConnection.setLocalDescription(answer);
+  socket.emit("answer", answer, roomName);
+});
+
+socket.on("answer", (answer) => {
+  myPeerConnection.setRemoteDescription(answer);
+});
+
+socket.on("ice", (ice) => {
+  myPeerConnection.addIceCandidate(ice);
+});
+
+socket.on("restriction", () => {
+  location.reload();
+  alert("max-people of room is 2");
+});
+
+// RTC Code
+
+function makeConnection() {
+  myPeerConnection = new RTCPeerConnection();
+  myPeerConnection.addEventListener("icecandidate", handleIce);
+  myPeerConnection.addEventListener("addstream", handleAddStream);
+  myStream
+    .getTracks()
+    .forEach((track) => myPeerConnection.addTrack(track, myStream));
+}
+
+function handleIce(data) {
+  socket.emit("ice", data.candidate, roomName);
+}
+
+function handleAddStream(data) {
+  const peersFace = document.querySelector("#peersFace");
+  peersFace.srcObject = data.stream;
+}
