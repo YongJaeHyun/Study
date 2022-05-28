@@ -1,0 +1,73 @@
+html {
+  text-align: center;
+}
+
+body {
+  width: 50%;
+  margin: 0 auto;
+  text-align: center;
+}
+
+h1 {
+  font-size: 3em;
+}
+
+h3 {
+  font-size: 27px;
+}
+
+div {
+  margin: 10px auto;
+  text-align: center;
+  vertical-align: middle;
+}
+
+div#link {
+  display: inline-block;
+}
+
+.div_job {
+  border-bottom: 1px solid #c9c9c9;
+  vertical-align: middle;
+  position: relative;
+  padding: 10px;
+  margin: 0;
+}
+
+ul {
+  list-style: none;
+  padding-left: 0px;
+  margin: 0 auto;
+  text-align: center;
+  font-size: 23px;
+}
+
+li {
+  margin: 0 auto;
+  text-align: center;
+  display: inline-block;
+}
+
+button {
+  padding: 5px 20px;
+  position: absolute;
+  top: 13px;
+  right: 0;
+  font-size: 16px;
+}
+
+a#export {
+  font-size: 24px;
+  margin-bottom: 20px;
+}
+
+a#job_link {
+  position: absolute;
+  top: 13px;
+  right: 0;
+}
+
+li#company {
+  display: block;
+  font-size: 30px;
+}
