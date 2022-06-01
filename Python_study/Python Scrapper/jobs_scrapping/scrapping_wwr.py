@@ -16,19 +16,25 @@ def get_result(job_list, URL):
     if job_list.find("a"):
         company = job_list.find("span", {"class": "company"}).get_text()
         info = job_list.find("span", {"class": "title"}).get_text()
+
         deadline = job_list.find("span", {"class": "date"})
         if deadline:
             deadline = deadline.get_text()
         else:
             deadline = job_list.find("span", {"class": "featured"}).get_text()
+            print(deadline)
         link = job_list.find("a")["href"]
+        if deadline == "featured":
+            link = None
+        else:
+            link = f"https://weworkremotely.com{link}"
     else:
-        company, info, deadline = [None]*3
-    return {"company": company, "info": info, "deadline": deadline, "link": f"https://weworkremotely.com{link}"}
+        company, info, deadline, link = [None]*4
+    return {"company": company, "info": info, "deadline": deadline, "link": link}
 
 
 def get_wwr_jobs(word):
-    URL = f"https://weworkremotely.com/remote-jobs/search?utf8=%E2%9C%93&term={word}"
+    URL = f"https://weworkremotely.com/remote-jobs/search?term={word}"
     jobs = []
     jobs_list = get_jobs_list(URL)
     cnt = 0

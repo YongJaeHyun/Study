@@ -27,15 +27,18 @@ def get_result(job_list, URL):
     if job_list.find("td"):
         company = job_list.find("h3", {"itemprop": "name"}).get_text()
         info = job_list.find("h2", {"itemprop": "title"}).get_text()
-        deadline = job_list.find("time").get_text()
+        deadline = job_list.find("time").get_text().replace(
+            "d", "day").replace("mo", "month").replace("yr", "year")
+        deadline = "~" + deadline
         link = job_list.find("td", {"class": "source"})
         if link.find("a"):
             link = link.find("a")["href"]
+            link = f"https://remoteok.io{link}"
         else:
-            link = "closed"
+            link = None
     else:
-        company, info, deadline = [None]*3
-    return {"company": company, "info": info, "deadline": deadline, "link": f"https://remoteok.io{link}"}
+        company, info, deadline, link = [None]*4
+    return {"company": company, "info": info, "deadline": deadline, "link": link}
 
 
 def get_rok_jobs(word):

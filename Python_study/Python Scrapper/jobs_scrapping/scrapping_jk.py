@@ -20,7 +20,7 @@ def get_result(job_list, URL):
         link = job_list.find(
             "div", {"class": "post-list-info"}).find("a")["href"]
     else:
-        company, info, deadline = [None]*3
+        company, info, deadline, link = [None]*4
     return {"company": company, "info": info, "deadline": deadline, "link": f"https://www.jobkorea.co.kr{link}"}
 
 

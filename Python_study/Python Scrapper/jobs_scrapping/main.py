@@ -10,7 +10,7 @@ DB = {}
 
 @app.route("/")
 def home():
-    return render_template("html/main.html")
+    return render_template("main.html")
 
 
 @app.route("/report")
@@ -20,27 +20,55 @@ def report():
         word = word.lower()
         existingJobs = DB.get(word)
         if existingJobs:
-            jobs = existingJobs
+            rok_jobs = existingJobs.get("remoteOK")
+            wwr_jobs = existingJobs.get("WeWorkRemotely")
+            jk_jobs = existingJobs.get("JobKorea")
+            jobs = rok_jobs + wwr_jobs + jk_jobs
         else:
-            jobs = get_rok_jobs(word) + get_wwr_jobs(word) + get_jk_jobs(word)
-            DB[word] = jobs
+            rok_jobs = get_rok_jobs(word)
+            wwr_jobs = get_wwr_jobs(word)
+            jk_jobs = get_jk_jobs(word)
+            jobs = rok_jobs + wwr_jobs + jk_jobs
+            DB[word] = {"remoteOK": rok_jobs,
+                        "WeWorkRemotely": wwr_jobs, "JobKorea": jk_jobs}
     else:
         return redirect("/")
-    return render_template("html/report.html", searchingBy=word, resultsNumber=len(jobs), jobs=jobs)
+    return render_template("report.html", searchingBy=word, resultsNumber=len(jobs), jobs=jobs)
+
+
+@app.route("/advanced-search")
+def advanced_search():
+    try:
+        word, website = request.args.getlist("word[]")
+        if not (word and website):
+            raise Exception()
+        job = DB.get(word).get(website)
+        if not job:
+            print("찾은 직업이 없어요...😢")
+            raise Exception()
+        return render_template("report.html", searchingBy=word, resultsNumber=len(job), jobs=job, website=website)
+    except:
+        return redirect("/")
 
 
 @app.route("/export")
 def export():
     try:
         word = request.args.get("word")
-        if not word:
-            raise Exception()
         word = word.lower()
         jobs = DB.get(word)
-        if not jobs:
-            raise Exception()
-        save_to_file(jobs)
-        return send_file("jobs.csv")
+        if "website" in request.args.keys():
+            website = request.args.get("website")
+            jobs = jobs.get(website)
+            save_to_file(jobs, website)
+        else:
+            rok_jobs = jobs.get("remoteOK")
+            wwr_jobs = jobs.get("WeWorkRemotely")
+            jk_jobs = jobs.get("JobKorea")
+            jobs = rok_jobs + wwr_jobs + jk_jobs
+            website = "jobs"
+            save_to_file(jobs, website)
+        return send_file(f"{website}.csv")
     except:
         return redirect("/")
 
