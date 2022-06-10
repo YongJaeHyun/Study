@@ -1,0 +1,170 @@
+html {
+  text-align: center;
+}
+
+html:root {
+  --box-shadow: 0;
+}
+
+body {
+  width: 50%;
+  margin: 0 auto;
+  animation: fadeIn 1s ease-in-out forwards;
+  background-image: url("/static/img/background.png");
+  text-align: center;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+section {
+  height: 620px;
+  width: auto;
+  border: 1px solid #c9c9c9;
+  border-radius: 40px;
+  margin-top: 20px;
+  margin-bottom: 15px;
+  overflow: auto;
+}
+
+h1 {
+  margin-bottom: 10px;
+  font-size: 3.1em;
+}
+
+h3 {
+  font-size: 30px;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+div {
+  margin: 0px auto;
+  text-align: center;
+  vertical-align: middle;
+}
+
+div#home {
+  text-align: center;
+  margin-top: 5px;
+  margin-bottom: 10px;
+}
+
+div#info {
+  display: inline-block;
+  width: 65%;
+  margin: 0;
+}
+
+div#link {
+  display: inline-block;
+  width: 200px;
+  position: absolute;
+  right: -25px;
+  top: 38px;
+}
+
+div#job {
+  border-bottom: 1px solid #c9c9c9;
+  vertical-align: middle;
+  padding: 10px;
+  margin: 0;
+  position: relative;
+}
+
+div#advanced-search {
+  width: 100%;
+  display: inline-block;
+  text-align: center;
+  margin: 0;
+}
+
+input {
+  display: inline;
+}
+
+ul {
+  width: 100%;
+  padding-left: 0px;
+  margin: 0;
+  text-align: center;
+  vertical-align: middle;
+  font-size: 23px;
+  background-color: #ddeadf;
+  list-style: none;
+}
+
+li {
+  margin: 0 auto;
+  text-align: left;
+  padding-left: 20px;
+}
+
+li#company {
+  display: block;
+  padding-left: 20px;
+  font-size: 19px;
+  text-align: left;
+}
+
+li#info {
+  text-align: center;
+  width: 100%;
+}
+
+li#deadline {
+  display: block;
+  text-align: center;
+}
+
+button {
+  padding: 5px 20px;
+  margin-right: 10px;
+  right: 0;
+  font-size: 16px;
+}
+
+button#home {
+  display: inline-block;
+  font-size: 20px;
+  margin: 0;
+}
+
+button#closed {
+  background-color: red;
+  border: 2px solid red;
+}
+
+button#advanced-search {
+  right: auto;
+  padding: 10px;
+  font-size: 20px;
+}
+
+a#export {
+  font-size: 26px;
+  margin-bottom: 10px;
+}
+
+form#advanced-search {
+  width: 100%;
+  text-align: center;
+  max-width: 100%;
+  border: 0;
+  padding: 0;
+  margin: 15px 0 0 0;
+}
+
+.target {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+.target::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera*/
+}
