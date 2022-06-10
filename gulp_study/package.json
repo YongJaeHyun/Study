@@ -1,0 +1,28 @@
+{
+  "name": "gulp",
+  "version": "1.0.0",
+  "description": "",
+  "author": "",
+  "license": "ISC",
+  "scripts": {
+    "dev": "gulp dev",
+    "build": "gulp build"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.18.2",
+    "@babel/preset-env": "^7.18.2",
+    "@babel/register": "^7.17.7",
+    "gulp": "^4.0.2"
+  },
+  "dependencies": {
+    "@truffle/hdwallet-provider": "^1.0.41-1",
+    "del": "^6.1.1",
+    "eli": "0.0.4",
+    "gifsicle": "^3.0.4",
+    "gulp-pug": "^5.0.0",
+    "gulp-webserver": "^0.1.0",
+    "pkg-config": "^1.1.1",
+    "pngquant": "^4.0.0",
+    "uuid": "^8.3.2"
+  }
+}
