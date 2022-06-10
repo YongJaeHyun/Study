@@ -467,3 +467,6 @@ FodyWeavers.xsd
 # Additional files built by Visual Studio
 
 # End of https://www.toptal.com/developers/gitignore/api/windows,c,visualstudio
+Python/Python Scrapper/jobs_scrapping/chromedriver
+gulp_study/package-lock.json
+Python/my_zoom/package-lock.json
