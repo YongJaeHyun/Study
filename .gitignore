@@ -471,3 +471,4 @@ Python/Python Scrapper/jobs_scrapping/chromedriver
 gulp_study/package-lock.json
 Python/my_zoom/package-lock.json
 gulp_study/build/
+*.png
